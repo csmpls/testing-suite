@@ -10,7 +10,7 @@ toggleButtons = require './lib/toggleButtons.coffee'
 fetchTimeInterval = 3000
 timeServerURL = 'http://indra.webfactional.com'
 postDataInterval = 1000
-dataCollectionServerURL = 'http://indra.webfactional.com/pm2app'
+dataCollectionServerURL = 'http://indra.webfactional.com/collector'
 
 interval = (delay, fn) -> setInterval(fn, delay)
 generateRandomId = -> randomString(4, 'abcdefghijklmnopqrstuvwxyz1234567890')
@@ -44,10 +44,12 @@ init = ->
 
 	# when start button is pressed, hide it + show stop button
 	# when stop button is pressed, hide it + show start button
+	# merge button presses into a stream of 'start' and 'stop' strings
 	$startButton = $('#startButton')
 	$stopButton = $('#stopButton')
 	startStopStream = toggleButtons($startButton, 'start', $stopButton, 'stop')
 
+	# start posting interval
 	startStopStream
 		.filter((v)->if v == 'start' then v)
 		.onValue(() ->
@@ -59,6 +61,7 @@ init = ->
 				$('#postRequestCount').html(postRequestCount))
 			console.log 'trying to start interval', postRequestInterval)
 
+	# stop posting interval
 	startStopStream
 		.filter((v)->if v == 'stop' then v)
 		.onValue(() -> clearInterval(postRequestInterval))
