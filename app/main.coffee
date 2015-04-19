@@ -5,6 +5,7 @@ baconmodel = require 'bacon.model'
 randomString = require 'make-random-string'
 setupIndraTimeClock = require './lib/setupIndraTimeClock.coffee'
 toggleButtons = require './lib/toggleButtons.coffee'
+generateNeuroskyReading = require  './lib/generateNeuroskyReading.coffee'
 
 # config vars
 fetchTimeInterval = 3000
@@ -14,10 +15,8 @@ dataCollectionServerURL = 'http://indra.webfactional.com/collector'
 
 interval = (delay, fn) -> setInterval(fn, delay)
 generateRandomId = -> randomString(4, 'abcdefghijklmnopqrstuvwxyz1234567890')
-getPostData = (userId) -> {id: userId}
 
 postData = (data) ->
-	console.log 'im posting'
 	$.ajax({
 		type: 'POST'
 		url: dataCollectionServerURL
@@ -54,12 +53,14 @@ init = ->
 		.filter((v)->if v == 'start' then v)
 		.onValue(() ->
 			postRequestInterval = interval(postDataInterval, () ->
+
 				# post data to the server
-				postData(getPostData(id))
+				postData(
+					generateNeuroskyReading(id))
+
 				# update the post counter
 				postRequestCount+=1
-				$('#postRequestCount').html(postRequestCount))
-			console.log 'trying to start interval', postRequestInterval)
+				$('#postRequestCount').html(postRequestCount)))
 
 	# stop posting interval
 	startStopStream
