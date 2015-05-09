@@ -16,10 +16,10 @@ moment = require 'moment'
 
 generateNeuroskyReading = (userId) -> 
 	id: userId
-	indra_time: moment()
+	indra_time: moment(new Date())
 	browser_latency: 53
 	reading:
-		reading_time: moment()
+		reading_time: moment(new Date())
 		signal_quality: 0
 		attention_esense: 50
 		meditation_esense: 50

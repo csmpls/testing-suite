@@ -6,24 +6,21 @@ module.exports = (grunt) ->
 			compile: 
 				files: [
 					src: ['app/lib/*.coffee', 'app/main.coffee'],
-					dest: 'built-app/bundle.js'
+					dest: '../bundle.js'
 	      		]
 
 		copy:
 			html:
 				src: 'app/index.html'
-				dest: 'built-app/index.html'
+				dest: '../index.html'
 			assets:
 				expand: true
 				cwd: 'app/assets/'
 				src: '**'
-				dest: 'built-app/assets/'
+				dest: '../assets/'
 				flatten: true
 				filter: 'isFile'
-		sass:
-			compile:
-				files:
-					'built-app/style.css': 'app/styles/main.scss'
+
 		watch:
 			coffeeify:
 				files: ['app/lib/*.coffee', 'app/main.coffee']
@@ -40,4 +37,4 @@ module.exports = (grunt) ->
 	grunt.loadNpmTasks 'grunt-contrib-copy'
 	grunt.loadNpmTasks 'grunt-contrib-sass'
 	grunt.loadNpmTasks 'grunt-contrib-watch'
-	grunt.registerTask 'default', ['coffeeify', 'copy', 'sass']
+	grunt.registerTask 'default', ['coffeeify', 'copy']

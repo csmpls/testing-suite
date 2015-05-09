@@ -3,15 +3,17 @@ Bacon = require 'baconjs'
 Bacon$ = require 'bacon.jquery'
 baconmodel = require 'bacon.model'
 randomString = require 'make-random-string'
+
 setupIndraTimeClock = require './lib/setupIndraTimeClock.coffee'
 toggleButtons = require './lib/toggleButtons.coffee'
 generateNeuroskyReading = require  './lib/generateNeuroskyReading.coffee'
 
 # config vars
 fetchTimeInterval = 3000
-timeServerURL = 'http://indra.webfactional.com'
+timeServerURL = 'http://indra.webfactional.com/timeserver'
 postDataInterval = 1000
 dataCollectionServerURL = 'http://indra.webfactional.com/collector'
+
 
 interval = (delay, fn) -> setInterval(fn, delay)
 generateRandomId = -> randomString(4, 'abcdefghijklmnopqrstuvwxyz1234567890')
@@ -26,7 +28,6 @@ postData = (data) ->
 		success: () -> console.log 'ok'
 		})
 
-# TODO start/stop button
 init = -> 
 
 	# show a clock thats synced with indra time
@@ -55,17 +56,18 @@ init = ->
 			postRequestInterval = interval(postDataInterval, () ->
 
 				# post data to the server
-				postData(
-					generateNeuroskyReading(id))
+				postData(generateNeuroskyReading(id))
 
 				# update the post counter
 				postRequestCount+=1
 				$('#postRequestCount').html(postRequestCount)))
-
+	
 	# stop posting interval
 	startStopStream
-		.filter((v)->if v == 'stop' then v)
-		.onValue(() -> clearInterval(postRequestInterval))
+		.filter((v) -> if v == 'stop' then v)
+		.onValue(() -> 
+			# stop posting data
+			clearInterval(postRequestInterval))
 
 	console.log 'launched'
 

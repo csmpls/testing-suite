@@ -5,7 +5,7 @@ baconmodel = require 'bacon.model'
 moment = require 'moment'
 
 timediff = (one, the_other) -> moment(the_other).diff(one)
-getServerTime = (timeDiff) -> moment().utc().add(timeDiff)
+getServerTime = (timeDiff) -> moment(new Date()).utc().add(timeDiff)
 showClock = (time) -> $('#clock').html(moment(time).format('MMMM Do YYYY, H:mm:ss:SSS'))
 
 setupIndraTimeClock = (fetchTimeInterval, timeServerURL) ->
@@ -21,7 +21,7 @@ setupIndraTimeClock = (fetchTimeInterval, timeServerURL) ->
 	# on each response from the timeserver
 	# set the diff between the servers time and ours
 	serverTimeResults
-		.map((t)-> timediff(moment(t), moment()))
+		.map((t)-> timediff(moment(t), moment(new Date())))
 		.onValue((t) -> timeDiff = t)
 
 	# show a clock that updates every 300ms
