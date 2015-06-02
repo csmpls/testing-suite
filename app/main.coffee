@@ -8,13 +8,13 @@ toggleButtons = require './lib/toggleButtons.coffee'
 
 # config vars
 fetchTimeInterval = 3000
-timeServerURL = 'http://indra.webfactional.com'
+timeServerURL = 'http://indra.webfactional.com/timeserver'
 postDataInterval = 1000
-dataCollectionServerURL = 'http://indra.webfactional.com/collector'
+dataCollectionServerURL = 'http://localhost:23023/'
 
 interval = (delay, fn) -> setInterval(fn, delay)
 generateRandomId = -> randomString(4, 'abcdefghijklmnopqrstuvwxyz1234567890')
-getPostData = (userId) -> {id: userId}
+getPostData = (userId) -> {app: 'testing-suite', user:userId, data: {stuff:'awesome'}}
 
 postData = (data) ->
 	console.log 'im posting'

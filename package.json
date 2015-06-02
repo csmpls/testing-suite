@@ -1,10 +1,10 @@
 {
-  "name": "empty-webapp",
+  "name": "indra-testing-suite",
   "version": "1.0.0",
-  "description": "an empty webapp",
+  "description": "e2e tests for indra",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node ./test/test.js | tap-spec"
   },
   "repository": {
     "type": "git",
@@ -22,7 +22,10 @@
     "grunt-contrib-copy": "^0.8.0",
     "grunt-contrib-jade": "^0.14.1",
     "grunt-contrib-sass": "^0.9.2",
-    "grunt-contrib-watch": "^0.6.1"
+    "grunt-contrib-watch": "^0.6.1",
+    "request-json": "^0.5.3",
+    "tap-spec": "^4.0.0",
+    "tape": "^4.0.0"
   },
   "dependencies": {
     "bacon.jquery": "^0.4.12",
