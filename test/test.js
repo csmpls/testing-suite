@@ -1,50 +1,43 @@
 var test = require('tape');
 var request = require('request-json');
-var config = require('../config.js')
+var config = require('../../config.js')
 var _ = require('lodash')
  
 // json REST client
-var client = request.createClient(config.collectionServerURL)
+var jsonRestClient = request.createClient(
+	config.COLLECTION_SERVER_URL)
+
+// indra channel
+indraFaucet = faucet(config.PUSHER_APP_ID) 
 
 // couchdb
 var cradle = require('cradle')
 // connect to couch
-db = new(cradle.Connection)(config.dbHost, config.dbPort)
-  .database(config.dbName)
+db = new(cradle.Connection)(config.DB_HOST, config.DB_PORT)
+  .database(config.DB_NAME)
 
+//
+//  TEST: client POST responses
+//
 var goodData = {
   user: 'me',
-  device: 'neurosky',
-  data: {nice:'yep'}
+  type: 'testData',
+  data: {whatever:42}
 }
 
 var badData = {
-	device: 'neurosky',
-	data: {nice:'no its not'}
+	user: 'this part is fine',
+	device: 'oops theres no type field',
+	data: {thisPart:'is fine'}
 }
 
-//
-//  client POST responses
-//
-test('posting good data -> 201', function(t) {
+test('posting good data -> 202', function(t) {
 	t.plan(1)
-	client.post(
-		'/post/test',
+	jsonRestClient.post(
+		'/data',
 		goodData,
 		function(error, response, body) {
-			t.equal(201, response.statusCode)
-		}
-	)
-})
-
-test('posting data to no channel -> 400 + BadRequestError', function(t) {
-	t.plan(2)
-	client.post(
-		'/post/',
-		goodData,
-		function(error, response, body) {
-			t.equal('BadRequestError', body.code)
-			t.equal(400, response.statusCode)
+			t.equal(202, response.statusCode)
 		}
 	)
 })
@@ -52,72 +45,92 @@ test('posting data to no channel -> 400 + BadRequestError', function(t) {
 test('posting bad data -> 422 + UnprocessableEntityError', function(t) {
 	t.plan(6)
 	// 1. poorly-formed data
-	client.post(
-		'/post/test',
+	jsonRestClient.post(
+		'/data',
 		badData,
 		function(error, response, body) {
-			t.equal('UnprocessableEntityError', body.code)
-			t.equal(422, response.statusCode)
+			t.equal('UnprocessableEntityError', body.code, 'null data UnprocessableEntityError')
+			t.equal(422, response.statusCode, 'bad data 422')
 		}
 	)
 	// 2. null data
-	client.post(
-		'/post/test', 
+	jsonRestClient.post(
+		'/data', 
 		null,
 		function(error, response, body) {
-			t.equal('UnprocessableEntityError', body.code)
-			t.equal(422, response.statusCode)
+			t.equal('UnprocessableEntityError', body.code, 'null data UnprocessableEntityError')
+			t.equal(422, response.statusCode, 'null data 422')
 		}
 	)
 	// 3. empty data
-	client.post(
-		'/post/test', 
+	jsonRestClient.post(
+		'/data', 
 		{},
 		function(error, response, body) {
-			t.equal('UnprocessableEntityError', body.code)
-			t.equal(422, response.statusCode)
+			t.equal('UnprocessableEntityError', body.code, 'empty data UnprocessableEntityError')
+			t.equal(422, response.statusCode, 'empty data 422')
 		}
 	)
 })
 
 
+//
+// TESTS: pusher tests
+//
+
+// test('should be able to subscribe to the indra channel', function (t) {
+// 	t.plan(1)
+// 	// send a message
+
+// 	// on receive
+// 	//  -> t.ok()
+// })
+
+test('should be able to filter thru indra channel', function (t) {
+	t.plan(1)
+
+	var aUniqueKey = JSON.stringify(new Date())
+
+	indraChannel.bind('testData', function(d) {
+		receivedUniqueKey = d.data.uniqueKey
+		if (receivedUniqueKey  === aUniqueKey) {
+			t.equal(receivedUniqueKey, aUniqueKey, 'we sent data and received it through pusher')
+		}
+	})
+
+	// send a message with our unique key
+	jsonRestClient.post(
+		'/data', 
+		{
+			type: 'testData',
+			data: { uniqueKey: aUniqueKey }
+		}, function(error, response, body) { })
+})
+
 // 
-// couch DB tests
+// TESTS: couch DB tests
 // 
 test('db should exist', function (t) {
 	t.plan(2)
 	db.exists(function (err, exists) {
-		t.equal(null, err)
-		t.equal(true, exists)
+		t.equal(true, exists, 'db exists')
+		t.equal(null, err, 'no errors')
 	})
 })
 
-test('should be able to retreive a post within 100ms of HTTP response', function (t) {
-	t.plan(2)
-
-	var msResponse = 100
-
-	var channelName = JSON.stringify(new Date())
-
-	var myData = {
-		user: 'me',
-		device: 'neurosky',
-		data: {data:'garbage'}
-	}
-
-	// post data to made up channel name
-	client.post(
-		'/post/' + channelName,
-		myData,
-		function (err, res, body) {
-			t.equal(201, res.statusCode)
-			// query by made up channelName
-			setTimeout(function() {
-				db.view('posts/byChannel', { key: channelName }, function (err, docs) {
-					// see if our data === queryed data
-					t.deepEquals(_.first(docs).value, myData)
-				})
-			}, msResponse)
-		}
-	)
+test('items in couchdb should have createdAt and type fields', function (t) {
+	t.plan(3)
+	db.view('indra-alpha/byType', { key: 'testData' }, function (err, res) {
+		t.ok(_.first(res), 'at least one (type:testData) post exists')
+		t.ok(_.first(res).value.createdAt, 'createdAt exists')
+		t.ok(_.first(res).value.type, 'type is ok')
+	})
 })
+
+test('db client can query by createdAt', function (t) {
+	t.plan(1)
+	db.view('indra-alpha/byCreatedAt', { }, function (err, res) {
+		t.ok(_.first(res), 'at least one post exists from createdAt key {}')
+	})
+})
+
